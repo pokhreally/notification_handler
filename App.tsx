@@ -7,6 +7,7 @@ import {
   View,
   ScrollView,
   Platform,
+  useColorScheme,
 } from "react-native";
 import ListItem from "./components/ListItem";
 import {
@@ -36,6 +37,8 @@ const Tasks: TASKPROPS[] = titles.map((title, index) => ({ title, index }));
 const BG_COLOR = "#F1F3F2";
 
 export default function App() {
+  const currentTheme = useColorScheme() ?? "light";
+
   const [tasks, setTasks] = useState<TASKPROPS[]>(Tasks);
   const scrollRef = useRef(null);
 
@@ -44,20 +47,34 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: currentTheme === "dark" ? "black" : BG_COLOR },
+      ]}
+    >
       <StatusBar style="auto" />
-      <Text style={styles.title}>Tasks</Text>
+      <Text
+        style={[
+          styles.title,
+          { color: currentTheme === "dark" ? "white" : "black" },
+        ]}
+      >
+        Tasks
+      </Text>
 
       <ScrollView ref={scrollRef} style={styles.scrollContainer}>
         <GestureHandlerRootView>
           <NativeViewGestureHandler>
             <View>
-              {tasks?.map((task) => (
+              {tasks?.map((task, index) => (
                 <ListItem
                   key={task.index}
                   task={task}
                   onDismiss={onDismiss}
                   simultaneousHandlers={scrollRef}
+                  index={index}
+                  length={tasks.length}
                 />
               ))}
             </View>
@@ -71,7 +88,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG_COLOR,
   },
   title: {
     fontSize: 44,

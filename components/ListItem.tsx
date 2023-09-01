@@ -5,6 +5,7 @@ import {
   Platform,
   useWindowDimensions,
   Pressable,
+  useColorScheme,
 } from "react-native";
 import React, { useCallback } from "react";
 import { TASKPROPS } from "../App";
@@ -26,20 +27,29 @@ import { FontAwesome } from "@expo/vector-icons";
 interface Props extends Pick<PanGestureHandlerProps, "simultaneousHandlers"> {
   task: TASKPROPS;
   onDismiss: (task: TASKPROPS) => void;
+  index: number;
+  length: number;
 }
 const LIST_HEIGHT = 80;
-const ROW_HEIGHT = 60;
 
-const ListItem = ({ task, onDismiss, simultaneousHandlers }: Props) => {
+const ListItem = ({
+  task,
+  onDismiss,
+  simultaneousHandlers,
+  index,
+  length,
+}: Props) => {
   const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const currentTheme = useColorScheme();
   const TRANSLATE_X = SCREEN_WIDTH * 0.3;
   const translateX = useSharedValue(0);
-  const radiusConstant = useSharedValue(10);
+  const radiusConstant = useSharedValue(20);
   const itemHeight = useSharedValue(LIST_HEIGHT);
 
   const panGesture = useAnimatedGestureHandler<PanGestureHandlerGestureEvent>({
     onActive: (event) => {
       translateX.value = event.translationX;
+      radiusConstant.value = withTiming(0);
     },
     onEnd: () => {
       const shouldBeDismissed =
@@ -49,7 +59,7 @@ const ListItem = ({ task, onDismiss, simultaneousHandlers }: Props) => {
         radiusConstant.value = withTiming(0);
       } else {
         translateX.value = withTiming(0);
-        radiusConstant.value = withTiming(10);
+        radiusConstant.value = withTiming(20);
       }
     },
   });
@@ -66,8 +76,13 @@ const ListItem = ({ task, onDismiss, simultaneousHandlers }: Props) => {
         translateX: translateX.value,
       },
     ],
-    borderTopRightRadius: radiusConstant.value,
-    borderBottomRightRadius: radiusConstant.value,
+    borderTopLeftRadius: index === 0 ? 20 : 0,
+    borderTopRightRadius: index === 0 ? radiusConstant.value : 0,
+    borderBottomLeftRadius: index === length - 1 ? radiusConstant.value : 0,
+    borderBottomRightRadius: index === length - 1 ? radiusConstant.value : 0,
+    backgroundColor: currentTheme === "dark" ? "#282927" : "white",
+    borderColor: currentTheme === "dark" ? "#3f413d" : "#F1F3F2",
+    borderBottomWidth: index === length - 1 ? 0 : 2,
   }));
 
   const iconStyle = useAnimatedStyle(() => {
@@ -95,7 +110,15 @@ const ListItem = ({ task, onDismiss, simultaneousHandlers }: Props) => {
         </Pressable>
         <Pressable onPress={handleDelete}>
           <Animated.View
-            style={[styles.redContainer, iconStyle, { width: TRANSLATE_X / 2 }]}
+            style={[
+              styles.redContainer,
+              iconStyle,
+              {
+                width: TRANSLATE_X / 2,
+                borderTopRightRadius: index === 0 ? 20 : 0,
+                borderBottomRightRadius: index === length - 1 ? 20 : 0,
+              },
+            ]}
           >
             <FontAwesome name="trash" size={28} color="white" />
           </Animated.View>
@@ -106,7 +129,14 @@ const ListItem = ({ task, onDismiss, simultaneousHandlers }: Props) => {
         onGestureEvent={panGesture}
       >
         <Animated.View style={[styles.titleContainer, rStyle]}>
-          <Text style={styles.text}>{task.title}</Text>
+          <Text
+            style={[
+              styles.text,
+              { color: currentTheme === "dark" ? "white" : "black" },
+            ]}
+          >
+            {task.title}
+          </Text>
         </Animated.View>
       </PanGestureHandler>
     </Animated.View>
@@ -121,36 +151,30 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     width: "90%",
-    height: ROW_HEIGHT,
-    borderRadius: 10,
+    height: "100%",
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "white",
     alignSelf: "center",
   },
   text: {
-    fontSize: 16,
+    fontSize: 18,
   },
   iconContainer: {
-    height: ROW_HEIGHT,
+    height: "100%",
     backgroundColor: "transparent",
     position: "absolute",
     flexDirection: "row",
     right: "5%",
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
   },
   redContainer: {
-    height: ROW_HEIGHT,
+    height: "100%",
     width: 50,
     backgroundColor: "red",
     alignItems: "center",
     justifyContent: "center",
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
   },
   blueContainer: {
-    height: ROW_HEIGHT,
+    height: "100%",
     width: 50,
     backgroundColor: "blue",
     alignItems: "center",
